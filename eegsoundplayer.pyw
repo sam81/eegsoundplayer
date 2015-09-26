@@ -2,20 +2,20 @@
 # -*- coding: utf-8 -*-
 
 #   Copyright (C) 2015 Samuele Carcagno <sam.carcagno@gmail.com>
-#   This file is part of EEGSoundPlayer
+#   This file is part of eegsoundplayer
 
-#    EEGSoundPlayer is free software: you can redistribute it and/or modify
+#    eegsoundplayer is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
 #    the Free Software Foundation, either version 3 of the License, or
 #    (at your option) any later version.
 
-#    EEGSoundPlayer is distributed in the hope that it will be useful,
+#    eegsoundplayer is distributed in the hope that it will be useful,
 #    but WITHOUT ANY WARRANTY; without even the implied warranty of
 #    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 #    GNU General Public License for more details.
 
 #    You should have received a copy of the GNU General Public License
-#    along with EEGSoundPlayer. If not, see <http://www.gnu.org/licenses/>.
+#    along with eegsoundplayer. If not, see <http://www.gnu.org/licenses/>.
 
 import fnmatch, random, signal, subprocess, sys, time
 import numpy as np
@@ -44,7 +44,7 @@ elif pyqtversion == 5:
     Slot = QtCore.pyqtSlot
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-from EEGSoundPlayer import qrc_resources
+from eegsoundplayer import qrc_resources
 
 class EEGSoundPlayer(QMainWindow):
     def __init__(self, parent=None, prm=None):

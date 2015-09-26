@@ -3,7 +3,7 @@ from distutils.core import setup
 import glob
 setup(
     name="EEGSoundPlayer",
-    version="0.0.2",
+    version="0.0.3",
     url="",
     author="Samuele Carcagno",
     author_email="sam.carcagno@google.com;",
@@ -27,15 +27,15 @@ setup(
         ],
     license="GPL v3",
     requires=['PyQt (>=5.3.2)', 'numpy (>=1.6.1)', 'scipy (>=0.10.1)'],
-    packages=["EEGSoundPlayer"],
-    scripts = ["EEGSoundPlayer.pyw"],
-    package_dir={"EEGSoundPlayer": "EEGSoundPlayer"},
-    package_data={'EEGSoundPlayer': ["qrc_resources.py"]}#,
+    packages=["eegsoundplayer"],
+    scripts = ["eegsoundplayer.pyw"],
+    package_dir={"eegsoundplayer": "eegsoundplayer"},
+    package_data={'eegsoundplayer': ["qrc_resources.py"]}#,
 
     
-    # data_files = [('share/applications', ['pychoacoustics.desktop']),
-    #               ('share/icons', ['icons/Machovka_Headphones.svg']),
-    #               ]
+    data_files = [('share/applications', ['eegsoundplayer.desktop']),
+                  ('share/icons', ['icons/media-playback-start.svgz']),
+                  ]
 
     )
 
