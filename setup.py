@@ -3,7 +3,7 @@ from distutils.core import setup
 import glob
 setup(
     name="eegsoundplayer",
-    version="0.0.5",
+    version="0.0.6",
     url="",
     author="Samuele Carcagno",
     author_email="sam.carcagno@google.com;",

@@ -10,4 +10,4 @@ Terminal=false
 Type=Application
 Exec=/usr/bin/eegsoundplayer -f %F
 Icon=/usr/share/icons/media-playback-start.svgz
-Categories=Audio;Science;
+Categories=Education;Science;
