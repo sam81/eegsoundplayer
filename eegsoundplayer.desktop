@@ -1,12 +1,11 @@
 [Desktop Entry]
-Version = 0.2.45
+Version = 0.0.1
 Name=eegsoundplayer
 Name[en_GB]=eegsoundplayer 
 GenericName=eegsoundplayer
 GenericName[en_GB]=eegsoundplayer
 Comment=Audio player for EEG experiments
 Comment[en_GB]=Audio player for EEG experiments
-MimeType=text/x-prm;
 Terminal=false
 Type=Application
 Exec=/usr/bin/eegsoundplayer -f %F
