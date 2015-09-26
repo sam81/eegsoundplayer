@@ -2,8 +2,8 @@
 from distutils.core import setup
 import glob
 setup(
-    name="EEGSoundPlayer",
-    version="0.0.3",
+    name="eegsoundplayer",
+    version="0.0.4",
     url="",
     author="Samuele Carcagno",
     author_email="sam.carcagno@google.com;",
@@ -30,7 +30,7 @@ setup(
     packages=["eegsoundplayer"],
     scripts = ["eegsoundplayer.pyw"],
     package_dir={"eegsoundplayer": "eegsoundplayer"},
-    package_data={'eegsoundplayer': ["qrc_resources.py"]}#,
+    package_data={'eegsoundplayer': ["qrc_resources.py"]},
 
     
     data_files = [('share/applications', ['eegsoundplayer.desktop']),
