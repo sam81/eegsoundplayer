@@ -472,8 +472,8 @@ class EEGSoundPlayer(QMainWindow):
     def onClickSoundCheckButton(self):
         if self.prm["soundCheckRunning"] == False:
             self.prm["soundCheckRunning"] = True
-            self.soundCheckButton.setIcon(QtGui.QIcon.fromTheme("media-playback-pause", QIcon(":/media-playback-pause")))
-            self.soundCheckButton.setText("Pause Sound Check")
+            self.soundCheckButton.setIcon(QtGui.QIcon.fromTheme("media-playback-pause", QIcon(":/media-playback-stop")))
+            self.soundCheckButton.setText("Stop Sound Check")
             snd = self.makeSoundCheckWAV()
             (hnl, self.soundCheckWAVFilePath) = mkstemp("tmp_snd.wav")
             wavwrite(snd, self.prm['sampRate'], 32, self.soundCheckWAVFilePath)

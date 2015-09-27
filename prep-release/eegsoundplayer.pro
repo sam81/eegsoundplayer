@@ -1,3 +1,3 @@
-SOURCES	     += ../EEGSoundPlayer.pyw
+SOURCES	     += ../eegsoundplayer.pyw
 
-TRANSLATIONS += EEGSoundPlayer_it.ts EEGSoundPlayer_fr.ts EEGSoundPlayer_es.ts EEGSoundPlayer_el.ts EEGSoundPlayer_en_US.ts EEGSoundPlayer_en_GB.ts
+TRANSLATIONS += eegsoundplayer_it.ts eegsoundplayer_fr.ts eegsoundplayer_es.ts eegsoundplayer_el.ts eegsoundplayer_en_US.ts eegsoundplayer_en_GB.ts

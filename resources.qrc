@@ -5,6 +5,7 @@
 <file alias="go-next">icons/go-next.svgz</file>
 <file alias="go-previous">icons/go-previous.svgz</file>
 <file alias="media-playback-start">icons/media-playback-start.svgz</file>
+<file alias="media-playback-stop">icons/media-playback-stop.svgz</file>
 <file alias="media-playback-pause">icons/media-playback-pause.svgz</file>
 </qresource>
 </RCC>
