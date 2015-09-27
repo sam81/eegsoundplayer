@@ -17,13 +17,14 @@
 #    You should have received a copy of the GNU General Public License
 #    along with eegsoundplayer. If not, see <http://www.gnu.org/licenses/>.
 
-import fnmatch, random, signal, subprocess, sys, time
+import fnmatch, platform, random, signal, subprocess, sys, time
 import numpy as np
+from tempfile import mkstemp
 
 pyqtversion = 5
 if pyqtversion == 4:
     from PyQt4 import QtCore, QtGui
-    from PyQt4.QtCore import Qt, QEvent, QThread
+    from PyQt4.QtCore import Qt, QEvent, QThread, QDate, QTime, QDateTime
     from PyQt4.QtGui import QAction, QApplication, QCheckBox, QComboBox, QDesktopServices, QDesktopWidget, QDoubleValidator, QFrame, QFileDialog, QGridLayout, QHBoxLayout, QIcon, QIntValidator, QLabel, QLayout, QLineEdit, QMainWindow, QMessageBox, QProgressBar, QScrollArea, QSizePolicy, QSpacerItem, QSplitter, QPushButton, QVBoxLayout, QWhatsThis, QWidget
     QFileDialog.getOpenFileName = QFileDialog.getOpenFileNameAndFilter
     QFileDialog.getOpenFileNames = QFileDialog.getOpenFileNamesAndFilter
@@ -33,11 +34,11 @@ if pyqtversion == 4:
 elif pyqtversion == -4:
     import PySide
     from PySide import QtCore, QtGui
-    from PySide.QtCore import Qt, QEvent, QThread, Signal, Slot
+    from PySide.QtCore import Qt, QEvent, QThread, Signal, Slot, QDate, QTime, QDateTime
     from PySide.QtGui import QAction, QApplication, QCheckBox, QComboBox, QDesktopServices, QDesktopWidget, QDoubleValidator, QFrame, QFileDialog, QGridLayout, QHBoxLayout, QIcon, QIntValidator, QLabel, QLayout, QLineEdit, QMainWindow, QMessageBox, QProgressBar, QScrollArea, QSizePolicy, QSpacerItem, QSplitter, QPushButton, QVBoxLayout, QWhatsThis, QWidget
 elif pyqtversion == 5:
     from PyQt5 import QtCore, QtGui
-    from PyQt5.QtCore import Qt, QEvent, QThread
+    from PyQt5.QtCore import Qt, QEvent, QThread, QDate, QTime, QDateTime
     from PyQt5.QtWidgets import QAction, QApplication, QCheckBox, QComboBox, QDesktopWidget, QFrame, QFileDialog, QGridLayout, QHBoxLayout, QLabel, QLayout, QLineEdit, QMainWindow, QMessageBox, QProgressBar, QScrollArea, QSizePolicy, QSpacerItem, QSplitter, QPushButton, QVBoxLayout, QWhatsThis, QWidget
     from PyQt5.QtGui import QDesktopServices, QDoubleValidator, QIcon, QIntValidator
     Signal = QtCore.pyqtSignal
@@ -45,12 +46,61 @@ elif pyqtversion == 5:
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 from eegsoundplayer import qrc_resources
+from eegsoundplayer.sndlib import*
+from eegsoundplayer.wavpy import*
+from eegsoundplayer._version_info import*
+
+__version__ = eegsoundplayer_version
 
 class EEGSoundPlayer(QMainWindow):
     def __init__(self, parent=None, prm=None):
         QMainWindow.__init__(self, parent)
+        self.prm = {}
+        self.prm['currentLocale'] = QtCore.QLocale("en_GB")
         self.cw = QFrame()
         self.gridBox = QGridLayout()
+
+        self.menubar = self.menuBar()
+        #FILE MENU
+        self.fileMenu = self.menubar.addMenu(self.tr('&File'))
+
+        # exitButton = QAction(QIcon(':/exit.svg'), self.tr('Exit'), self)
+        # exitButton.setShortcut('Ctrl+Q')
+        # exitButton.setStatusTip(self.tr('Exit application'))
+        # exitButton.triggered.connect(self.close)
+        # self.fileMenu.addAction(exitButton)
+
+        self.openStimListButton = QAction(QIcon.fromTheme("document-open", QIcon(":/document-open")), self.tr('Open Stim. List'), self)
+        self.openStimListButton.setStatusTip(self.tr('Open Stim. List'))
+        self.openStimListButton.triggered.connect(self.onClickOpenStimListButton)
+
+        self.openLogFileButton = QAction(QIcon.fromTheme("document-open", QIcon(":/document-open")), self.tr('Open Log File'), self)
+        self.openLogFileButton.setStatusTip(self.tr('Open Log File'))
+        self.openLogFileButton.triggered.connect(self.onClickOpenLogFileButton)
+
+        self.openStdoutFileButton = QAction(QIcon.fromTheme("document-open", QIcon(":/document-open")), self.tr('Open stdout File'), self)
+        self.openStdoutFileButton.setStatusTip(self.tr('Open stdout File'))
+        self.openStdoutFileButton.triggered.connect(self.onClickOpenStdoutFileButton)
+
+        self.openStderrFileButton = QAction(QIcon.fromTheme("document-open", QIcon(":/document-open")), self.tr('Open stderr File'), self)
+        self.openStderrFileButton.setStatusTip(self.tr('Open stderr File'))
+        self.openStderrFileButton.triggered.connect(self.onClickOpenStderrFileButton)
+
+        self.fileMenu.addAction(self.openStimListButton)
+        self.fileMenu.addAction(self.openLogFileButton)
+        self.fileMenu.addAction(self.openStdoutFileButton)
+        self.fileMenu.addAction(self.openStderrFileButton)
+
+        self.helpMenu = self.menubar.addMenu(self.tr('&Help'))
+        # self.onShowManualPdfAction = QAction(self.tr('Manual'), self)
+        # self.helpMenu.addAction(self.onShowManualPdfAction)
+        # self.onShowManualPdfAction.triggered.connect(onShowManualPdf)
+
+        
+        self.onAboutAction = QAction(self.tr('About eegsoundplayer'), self)
+        self.helpMenu.addAction(self.onAboutAction)
+        self.onAboutAction.triggered.connect(self.onAbout)
+        
         n = 0
         ###########
         ## SOUND PLAY BUTTON
@@ -75,6 +125,12 @@ class EEGSoundPlayer(QMainWindow):
         self.resetButton = QPushButton("Reset", self)
         self.resetButton.clicked.connect(self.onClickResetButton)
         self.gridBox.addWidget(self.resetButton, n, 1)
+
+        n = n+1
+        self.soundCheckButton = QPushButton("Sound Check", self)
+        self.soundCheckButton.setIcon(QtGui.QIcon.fromTheme("media-playback-start", QIcon(":/media-playback-start")))
+        self.soundCheckButton.clicked.connect(self.onClickSoundCheckButton)
+        self.gridBox.addWidget(self.soundCheckButton, n, 1)
 
         n = n+1
         self.subjIDLabel = QLabel("Participant ID:", self)
@@ -173,6 +229,14 @@ class EEGSoundPlayer(QMainWindow):
         self.currentBlock = 1
         self.blockLabels = ['']
 
+        if platform.system() == "Linux":
+            self.playCmdString = "aplay "
+        elif platform.system() == 'Darwin':
+            self.playCmdString = "afplay "
+
+        self.prm["sampRate"] = 48000
+        self.prm["maxLevel"] = 101
+        self.prm["soundCheckRunning"] = False
         self.nBlocks = 0
         self.totalCount = 0
         self.runningBlock = False
@@ -253,7 +317,7 @@ class EEGSoundPlayer(QMainWindow):
     def moveToNextBlock(self):
         self.runningBlock = False
         self.playing = False
-        self.logFile.flush()
+        self.logFileHandle.flush()
         self.statusBar().showMessage("Idle")
         self.soundPlayButton.setIcon(QtGui.QIcon.fromTheme("media-playback-start", QIcon(":/media-playback-start")))
         self.soundPlayButton.setText("Play")
@@ -269,7 +333,9 @@ class EEGSoundPlayer(QMainWindow):
             self.statusBar().showMessage("Finished Session")
             self.blockGauge.setValue(self.nBlocks)
             self.blockGauge.setFormat("Blocks Completed" +  ': ' + str(self.currentBlock) + '/' + str(self.nBlocks))
-            self.logFile.close()
+            self.logFileHandle.close()
+            self.stdoutFileHandle.close()
+            self.stderrFileHandle.close()
             self.logFileIsOpen = False
 
     def onClickNextBlockButton(self):
@@ -302,6 +368,7 @@ class EEGSoundPlayer(QMainWindow):
         fName = QFileDialog.getOpenFileName(self, self.tr("Choose parameters file to load"), '', self.tr("text files (*.txt *TXT *Txt);;All Files (*)"))[0]
         if len(fName) > 0: #if the user didn't press cancel
             self.resetSession()
+            self.stimListFilePath = fName
             fStream = open(fName, 'r')
             allLines = fStream.readlines()
             fStream.close()
@@ -340,9 +407,17 @@ class EEGSoundPlayer(QMainWindow):
         if len(ftow) > 0:
             if fnmatch.fnmatch(ftow, '*.txt') == False:
                 ftow = ftow + '.txt'
-            self.logFile = open(ftow, 'a')
+            self.prm["logFilePath"] = ftow
+            self.logFileHandle = open(ftow, 'a')
             self.logFileIsOpen = True
-
+            
+            rootFilePath = "".join(ftow.split(".")[0:len(ftow.split("."))-1])
+            self.prm["stdoutFilePath"] = rootFilePath + "_stdout" + ".txt"
+            self.prm["stderrFilePath"] = rootFilePath + "_stderr" + ".txt"
+            self.stdoutFileHandle = open(self.prm["stdoutFilePath"], "a")
+            self.stderrFileHandle = open(self.prm["stderrFilePath"], "a")
+                
+                
     def onISITypeChooseChange(self, ISIType):
         if ISIType == "Fixed":
             self.ISILabel.show()
@@ -358,6 +433,120 @@ class EEGSoundPlayer(QMainWindow):
             self.ISIMaxBox.show()
             self.ISILabel.hide()
             self.ISIBox.hide()
+
+    def onClickOpenStimListButton(self):
+        if self.stimListLoaded == True:
+            fileToOpen = self.stimListFilePath
+            QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(fileToOpen))
+        else:
+            ret = QMessageBox.information(self, self.tr("message"),
+                                                self.tr("No stimulus list has been loaded yet."),
+                                                QMessageBox.Ok)
+    def onClickOpenLogFileButton(self):
+        if "logFilePath" in self.prm:
+            fileToOpen = self.prm["logFilePath"]
+            QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(fileToOpen))
+        else:
+            ret = QMessageBox.information(self, self.tr("message"),
+                                                self.tr("No log file has been opened yet."),
+                                                QMessageBox.Ok)
+
+    def onClickOpenStdoutFileButton(self):
+        if "stdoutFilePath" in self.prm:
+            fileToOpen = self.prm["stdoutFilePath"]
+            QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(fileToOpen))
+        else:
+            ret = QMessageBox.information(self, self.tr("message"),
+                                                self.tr("No stdout file has been opened yet."),
+                                                QMessageBox.Ok)
+
+    def onClickOpenStderrFileButton(self):
+        if "stderrFilePath" in self.prm:
+            fileToOpen = self.prm["stderrFilePath"]
+            QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(fileToOpen))
+        else:
+            ret = QMessageBox.information(self, self.tr("message"),
+                                                self.tr("No stderr file has been opened yet."),
+                                                QMessageBox.Ok)
+
+    def onClickSoundCheckButton(self):
+        if self.prm["soundCheckRunning"] == False:
+            self.prm["soundCheckRunning"] = True
+            self.soundCheckButton.setIcon(QtGui.QIcon.fromTheme("media-playback-pause", QIcon(":/media-playback-pause")))
+            self.soundCheckButton.setText("Pause Sound Check")
+            snd = self.makeSoundCheckWAV()
+            (hnl, self.soundCheckWAVFilePath) = mkstemp("tmp_snd.wav")
+            wavwrite(snd, self.prm['sampRate'], 32, self.soundCheckWAVFilePath)
+            self.playThread2 = threadedPlayer2(self)
+            self.playThread2.playThreadedSound(self.soundCheckWAVFilePath)
+        else:
+            self.playThread2.terminate()
+            self.soundCheckButton.setIcon(QtGui.QIcon.fromTheme("media-playback-start", QIcon(":/media-playback-start")))
+            self.soundCheckButton.setText("Sound Check")
+            self.prm["soundCheckRunning"] = False
+                 
+    def makeSoundCheckWAV(self):
+        G= 196
+        Eb= 155.56
+        F= 174.61
+        D = 146.83
+        tUnit = 250
+        ramp = 25
+        level = 80
+        channel = "Both"
+        lowHarm = 2
+        highHarm = 2
+        
+        
+        thisSnd = complexTone(G, "Sine", lowHarm, highHarm, 0, level, tUnit, ramp, channel, self.prm['sampRate'], self.prm['maxLevel'])
+        p1 = concatenate((thisSnd, thisSnd), axis=0)
+        p1 = concatenate((p1, thisSnd), axis=0)
+
+        p2 = complexTone(Eb, "Sine", lowHarm, highHarm, 0, level, tUnit*4, ramp, channel, self.prm['sampRate'], self.prm['maxLevel'])
+        p3 = makeSilence(tUnit+ramp*2, self.prm['sampRate'])
+        thisSnd = complexTone(F, "Sine", lowHarm, highHarm, 0, level, tUnit, ramp, channel, self.prm['sampRate'], self.prm['maxLevel'])
+        p4 = concatenate((thisSnd, thisSnd), axis=0)
+        p4 = concatenate((p4, thisSnd), axis=0)
+
+        p5 = complexTone(D, "Sine", lowHarm, highHarm, 0, level, tUnit*4, ramp, channel, self.prm['sampRate'], self.prm['maxLevel'])
+        snd = concatenate((p1, p2), axis=0)
+        snd = concatenate((snd, p3), axis=0)
+        snd = concatenate((snd, p4), axis=0)
+
+        snd = concatenate((snd, p5), axis=0)
+        
+        return snd
+
+    def onAbout(self):
+        if pyqtversion in [4,5]:
+            qt_compiled_ver = QtCore.QT_VERSION_STR
+            qt_runtime_ver = QtCore.qVersion()
+            qt_pybackend_ver = QtCore.PYQT_VERSION_STR
+            qt_pybackend = "PyQt"
+        elif pyqtversion == -4:
+            qt_compiled_ver = QtCore.__version__
+            qt_runtime_ver = QtCore.qVersion()
+            qt_pybackend_ver = PySide.__version__
+            qt_pybackend = "PySide"
+        QMessageBox.about(self, self.tr("About eegsoundplayer"),
+                                self.tr("""<b>eegsoundplayer - EEG Sound Player</b> <br>
+                                - version: {0}; <br>
+                                - build date: {1} <br>
+                                <p> Copyright &copy; 2015 Samuele Carcagno. <a href="mailto:sam.carcagno@gmail.com">sam.carcagno@gmail.com</a> 
+                                All rights reserved. <p>
+                This program is free software: you can redistribute it and/or modify
+                it under the terms of the GNU General Public License as published by
+                the Free Software Foundation, either version 3 of the License, or
+                (at your option) any later version.
+                <p>
+                This program is distributed in the hope that it will be useful,
+                but WITHOUT ANY WARRANTY; without even the implied warranty of
+                MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+                GNU General Public License for more details.
+                <p>
+                You should have received a copy of the GNU General Public License
+                along with this program.  If not, see <a href="http://www.gnu.org/licenses/">http://www.gnu.org/licenses/</a>
+                <p>Python {2} - {3} {4} compiled against Qt {5}, and running with Qt {6} on {7}""").format(__version__, eegsoundplayer_builddate, platform.python_version(), qt_pybackend, qt_pybackend_ver, qt_compiled_ver, qt_runtime_ver, platform.system()))
          
 class threadedPlayer(QThread):
     progress = Signal(int)
@@ -371,19 +560,33 @@ class threadedPlayer(QThread):
         while self.parent().currentCount < self.parent().totalCount and self.parent().runningBlock == True:
             print("Playing: " + self.parent().trialList[self.parent().blockLabels.index('B'+str(self.parent().currentBlock))][self.parent().currentCount])
             filePath = self.parent().trialList[self.parent().blockLabels.index('B'+str(self.parent().currentBlock))][self.parent().currentCount]
-            subprocess.call('aplay ' + filePath, shell=True)
+            subprocess.call(self.parent().playCmdString + filePath, stdout=self.parent().stdoutFileHandle, stderr=self.parent().stderrFileHandle, shell=True)
             if self.parent().ISITypeChooser.currentText() == "Fixed":
                 ISI = int(self.parent().ISIBox.text())
             else:
                 ISI = random.uniform(int(self.parent().ISIMinBox.text()), int(self.parent().ISIMaxBox.text()))
             time.sleep(ISI/1000)
-            self.parent().logFile.write(filePath + ";" + self.parent().blockLabels[self.parent().currentBlock-1] + ";" + self.parent().subjID.text() + "\n")
+            currDate = QDate.toString(QDate.currentDate(), self.parent().prm["currentLocale"].dateFormat(self.parent().prm["currentLocale"].ShortFormat)) 
+            currTime = QTime.toString(QTime.currentTime())#, self.parent().prm["currentLocale"].timeFormat(self.parent().prm["currentLocale"].ShortFormat)) 
+            self.parent().logFileHandle.write(filePath + ";" + self.parent().blockLabels[self.parent().currentBlock-1] + ";" + self.parent().subjID.text() + ";" + currDate + ";" + currTime + "\n")
             
             self.parent().currentCount = self.parent().currentCount + 1
             pcTot = self.parent().currentCount / self.parent().totalCount * 100
             self.progress.emit(int(pcTot))
             if self.parent().currentCount == self.parent().totalCount:
                 self.blockCompleted.emit()
+
+
+class threadedPlayer2(QThread):
+    def __init__(self, parent):
+        QThread.__init__(self, parent)
+    def playThreadedSound(self, filePath):
+        self.filePath = filePath
+        self.start()
+    def run(self):
+        while True:
+            subprocess.call(self.parent().playCmdString + self.filePath, shell=True)
+            time.sleep(0.5)
 
 def main():
     
