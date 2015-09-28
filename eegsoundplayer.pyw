@@ -314,7 +314,7 @@ class EEGSoundPlayer(QMainWindow):
                     random.shuffle(self.trialList[bl])
             self.totalCount = len(self.trialList[self.blockLabels.index('B'+str(self.currentBlock))])
             self.updateStatus()
-        print(self.blockLabels)
+
         self.runningBlock = True
         if self.playing == False:
             if self.prm["pref"]["startRecWAV"] != "":
@@ -331,6 +331,7 @@ class EEGSoundPlayer(QMainWindow):
             self.soundPlayButton.setIcon(QtGui.QIcon.fromTheme("media-playback-start", QIcon(":/media-playback-start")))
             self.soundPlayButton.setText("Play")
             self.playThread.terminate()
+            time.sleep(1)
             if self.prm["pref"]["stopRecWAV"] != "":
                 subprocess.call(self.playCmdString + self.prm["pref"]["stopRecWAV"], shell=True)
                 #time.sleep(0.5)
