@@ -331,7 +331,10 @@ class EEGSoundPlayer(QMainWindow):
             self.soundPlayButton.setIcon(QtGui.QIcon.fromTheme("media-playback-start", QIcon(":/media-playback-start")))
             self.soundPlayButton.setText("Play")
             self.playThread.terminate()
-            time.sleep(1)
+            if 'sleepBeforeStop' in self.prm:
+                time.sleep(self.prm['sleepBeforeStop']/1000)
+            else:
+                time.sleep(1)
             if self.prm["pref"]["stopRecWAV"] != "":
                 subprocess.call(self.playCmdString + self.prm["pref"]["stopRecWAV"], shell=True)
                 #time.sleep(0.5)
@@ -411,7 +414,7 @@ class EEGSoundPlayer(QMainWindow):
                     self.shuffleBlocksCheckBox.setChecked(True)
                 if ln[0:14] == "Shuffle Trials" and ln.split(":")[1].strip() == "True":
                     self.shuffleTrialsCheckBox.setChecked(True)
-                if ln[0:3] == "ISI":# and ln.split(":")[1].strip() == "True":
+                if ln[0:3] == "ISI":
                     if len(ln.split(":")[1].split("-")) == 1:
                         self.ISITypeChooser.setCurrentIndex(0)
                         ISI = ln.split(":")[1].strip()
@@ -422,6 +425,8 @@ class EEGSoundPlayer(QMainWindow):
                         ISIMax = ln.split(":")[1].split("-")[1].strip()
                         self.ISIMinBox.setText(ISIMin)
                         self.ISIMaxBox.setText(ISIMax)
+                if ln[0:17] == "Sleep Before Stop":
+                    self.prm['sleepBeforeStop'] = int(ln.split(":")[1].strip())
             self.stimListLoaded = True
             self.statusBar().showMessage("Ready")
             self.totalCount = len(self.trialList[0])

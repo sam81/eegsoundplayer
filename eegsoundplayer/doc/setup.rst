@@ -43,7 +43,7 @@ Optionally, a stimulus list file can contain directives specifying whether the b
 
 Please, note that these directives will only put a check on the "Shuffle Blocks" and "Shuffle Trials" checkboxes in the ``eegsoundplayer`` window when the stimulus list is loaded. If the checkboxes are subsequently unchecked by the user no randomization will occur.
    
-Finally, the stimulus list file can specify the ISI to be used. If you for example want a fixed 500-ms ISI just put a line with ``ISI: 500`` on top of the stimulus list file. If you want a random uniform ISI between for example 200 and 500 ms, just put a line with ``ISI: 200-500`` on top of the stimulus list file. An example is given below:
+The stimulus list file can also specify the ISI to be used. If you for example want a fixed 500-ms ISI just put a line with ``ISI: 500`` on top of the stimulus list file. If you want a random uniform ISI between for example 200 and 500 ms, just put a line with ``ISI: 200-500`` on top of the stimulus list file. An example is given below:
 
 ::
 
@@ -60,6 +60,8 @@ Finally, the stimulus list file can specify the ISI to be used. If you for examp
    /home/sam/stimuli/snd_b_2.wav
    /home/sam/stimuli/snd_b_3.wav
    ----------
+
+By default when the pause button is pressed during playback, and a stop recording WAV is selected in the preferences window (see :ref:`sec-pref_window`), ``eegsoundplayer`` waits for one second before playing the WAV file with the stop recording trigger. This is done to allow some time for the playback of the stimulus that is currently playing to end cleanly before sending another sound to the soundcard. If you're using stimuli that are about one second or longer you will need to increase that waiting time. This can be done by putting a line with ``Sleep Before Stop: 2000`` on the top of the stimulus list file. This will increase the waiting time to 2000 ms. You can change that value to whatever suits your experiment.
 
 .. _sec-log_file:
 

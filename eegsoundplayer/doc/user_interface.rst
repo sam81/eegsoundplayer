@@ -53,6 +53,8 @@ File Menu
 - **Open stderr File** Open the stderr file for inspection (see :ref:`sec-log_file`. An stderr file needs to be already selected in order to open it.
 
 
+.. _sec-pref_window:
+  
 Preferences Dialog
 ==================
 
