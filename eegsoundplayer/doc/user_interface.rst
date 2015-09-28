@@ -51,3 +51,13 @@ File Menu
 - **Open Log File** Open the log file for inspection (see :ref:`sec-log_file`. A log file needs to be already selected in order to open it.
 
 - **Open stderr File** Open the stderr file for inspection (see :ref:`sec-log_file`. An stderr file needs to be already selected in order to open it.
+
+
+Preferences Dialog
+==================
+
+- **Choose Start Recording WAV** Choose a WAV file containing the trigger code that starts the EEG recording software. This field is optional.
+
+- **Choose Stop Recording WAV** Choose a WAV file containing the trigger code that stops the EEG recording software. This field is optional.
+
+- **Choose Mark Block Beginning WAV** Choose a WAV file containing a trigger code to mark the beginning of a block of trials. This field is optional.
