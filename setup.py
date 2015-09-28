@@ -3,7 +3,7 @@ from distutils.core import setup
 import glob
 setup(
     name="eegsoundplayer",
-    version="0.0.9",
+    version="0.0.10",
     url="",
     author="Samuele Carcagno",
     author_email="sam.carcagno@google.com;",
@@ -30,7 +30,20 @@ setup(
     packages=["eegsoundplayer"],
     scripts = ["eegsoundplayer.pyw"],
     package_dir={"eegsoundplayer": "eegsoundplayer"},
-    package_data={'eegsoundplayer': ["qrc_resources.py"]},
+    package_data={'eegsoundplayer': ["qrc_resources.py",
+                                     "doc/_build/latex/*.pdf",
+                                     "doc/_build/html/*.*",
+                                     "doc/_build/html/_images/*",
+                                     "doc/_build/html/_modules/*",
+                                     "doc/_build/html/_sources/*.*",
+                                     "doc/_build/html/_sources/_templates/autosummary/*.*",
+                                     "doc/_build/html/_sources/_themes/*.*",
+                                     "doc/_build/html/_static/*.*",
+                                     "doc/_build/html/_static/css/*.*",
+                                     "doc/_build/html/_static/font/*.*",
+                                     "doc/_build/html/_static/js/*.*",
+                                     "doc/_build/html/_templates/autosummary/*.*",
+                                     "doc/_build/html/_themes/*.*"],},
 
     
     data_files = [('share/applications', ['eegsoundplayer.desktop']),
