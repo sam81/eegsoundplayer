@@ -46,6 +46,8 @@ elif pyqtversion == 5:
 signal.signal(signal.SIGINT, signal.SIG_DFL)
 
 from eegsoundplayer import qrc_resources
+from eegsoundplayer.dialog_edit_preferences import*
+from eegsoundplayer.global_parameters import*
 from eegsoundplayer.sndlib import*
 from eegsoundplayer.wavpy import*
 from eegsoundplayer._version_info import*
@@ -57,7 +59,7 @@ __version__ = eegsoundplayer_version
 class EEGSoundPlayer(QMainWindow):
     def __init__(self, parent=None, prm=None):
         QMainWindow.__init__(self, parent)
-        self.prm = {}
+        self.prm = prm#{}
         self.prm['currentLocale'] = QtCore.QLocale("en_GB")
         self.cw = QFrame()
         self.gridBox = QGridLayout()
@@ -93,6 +95,14 @@ class EEGSoundPlayer(QMainWindow):
         #self.fileMenu.addAction(self.openStdoutFileButton)
         self.fileMenu.addAction(self.openStderrFileButton)
 
+        #EDIT MENU
+        self.editMenu = self.menubar.addMenu(self.tr('&Edit'))
+        self.openLogFileButton = QAction(QIcon.fromTheme("document-open", QIcon(":/document-open")), self.tr('Open Log File'), self)
+        self.editPrefAction = QAction(self.tr('Preferences'), self)
+        self.editMenu.addAction(self.editPrefAction)
+        self.editPrefAction.triggered.connect(self.onEditPref)
+        
+        #HELP MENU
         self.helpMenu = self.menubar.addMenu(self.tr('&Help'))
 
         self.onShowManualHTMLAction = QAction(self.tr('Manual (html)'), self)
@@ -307,6 +317,9 @@ class EEGSoundPlayer(QMainWindow):
         print(self.blockLabels)
         self.runningBlock = True
         if self.playing == False:
+            if self.prm["pref"]["startRecWAV"] != "":
+                subprocess.call(self.playCmdString + self.prm["pref"]["startRecWAV"], shell=True)
+                time.sleep(0.5)
             self.playing = True
             self.statusBar().showMessage("Playing")
             self.soundPlayButton.setIcon(QtGui.QIcon.fromTheme("media-playback-pause", QIcon(":/media-playback-pause")))
@@ -318,6 +331,9 @@ class EEGSoundPlayer(QMainWindow):
             self.soundPlayButton.setIcon(QtGui.QIcon.fromTheme("media-playback-start", QIcon(":/media-playback-start")))
             self.soundPlayButton.setText("Play")
             self.playThread.terminate()
+            if self.prm["pref"]["stopRecWAV"] != "":
+                subprocess.call(self.playCmdString + self.prm["pref"]["stopRecWAV"], shell=True)
+                #time.sleep(0.5)
 
     def onClickSoundPauseButton(self):
         self.playThread.terminate()
@@ -525,6 +541,11 @@ class EEGSoundPlayer(QMainWindow):
         
         return snd
 
+    def onEditPref(self):
+        dialog = preferencesDialog(self)
+        if dialog.exec_():
+            dialog.permanentApply()
+
     def onAbout(self):
         if pyqtversion in [4,5]:
             qt_compiled_ver = QtCore.QT_VERSION_STR
@@ -566,6 +587,13 @@ class threadedPlayer(QThread):
         self.start()
     def run(self):
         while self.parent().currentCount < self.parent().totalCount and self.parent().runningBlock == True:
+            if self.parent().currentCount == 0:
+                # if self.prm["pref"]["startRecWAV"] != "":
+                #     subprocess.call(self.parent().playCmdString + self.prm["pref"]["startRecWAV"], shell=True)
+                #     time.sleep(0.5)
+                if self.parent().prm["pref"]["markBlockWAV"] != "":
+                    subprocess.call(self.parent().playCmdString + self.parent().prm["pref"]["markBlockWAV"], shell=True)
+                    time.sleep(0.5)
             print("Playing: " + self.parent().trialList[self.parent().blockLabels.index('B'+str(self.parent().currentBlock))][self.parent().currentCount])
             filePath = self.parent().trialList[self.parent().blockLabels.index('B'+str(self.parent().currentBlock))][self.parent().currentCount]
             #subprocess.call(self.parent().playCmdString + filePath, stdout=self.parent().stdoutFileHandle, stderr=self.parent().stderrFileHandle, shell=True)
@@ -580,10 +608,13 @@ class threadedPlayer(QThread):
             self.parent().logFileHandle.write(filePath + ";" + self.parent().blockLabels[self.parent().currentBlock-1] + ";" + self.parent().subjID.text() + ";" + currDate + ";" + currTime + "\n")
             
             self.parent().currentCount = self.parent().currentCount + 1
+
             pcTot = self.parent().currentCount / self.parent().totalCount * 100
             self.progress.emit(int(pcTot))
             if self.parent().currentCount == self.parent().totalCount:
                 self.blockCompleted.emit()
+                if self.parent().prm["pref"]["stopRecWAV"] != "":
+                    subprocess.call(self.parent().playCmdString + self.parent().prm["pref"]["stopRecWAV"], shell=True)
 
 
 class threadedPlayer2(QThread):
@@ -598,10 +629,12 @@ class threadedPlayer2(QThread):
             time.sleep(0.5)
 
 def main():
-    
+    prm = {}
     app = QApplication(sys.argv)
     app.setWindowIcon(QtGui.QIcon.fromTheme("media-playback-start", QIcon(":/media-playback-start")))
-    ex = EEGSoundPlayer()
+    prm = get_prefs(prm)
+    prm = global_parameters(prm)
+    ex = EEGSoundPlayer(prm=prm)
     sys.exit(app.exec_())
 
 
