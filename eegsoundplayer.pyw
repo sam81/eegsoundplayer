@@ -78,9 +78,9 @@ class EEGSoundPlayer(QMainWindow):
         self.openLogFileButton.setStatusTip(self.tr('Open Log File'))
         self.openLogFileButton.triggered.connect(self.onClickOpenLogFileButton)
 
-        self.openStdoutFileButton = QAction(QIcon.fromTheme("document-open", QIcon(":/document-open")), self.tr('Open stdout File'), self)
-        self.openStdoutFileButton.setStatusTip(self.tr('Open stdout File'))
-        self.openStdoutFileButton.triggered.connect(self.onClickOpenStdoutFileButton)
+        # self.openStdoutFileButton = QAction(QIcon.fromTheme("document-open", QIcon(":/document-open")), self.tr('Open stdout File'), self)
+        # self.openStdoutFileButton.setStatusTip(self.tr('Open stdout File'))
+        # self.openStdoutFileButton.triggered.connect(self.onClickOpenStdoutFileButton)
 
         self.openStderrFileButton = QAction(QIcon.fromTheme("document-open", QIcon(":/document-open")), self.tr('Open stderr File'), self)
         self.openStderrFileButton.setStatusTip(self.tr('Open stderr File'))
@@ -88,14 +88,18 @@ class EEGSoundPlayer(QMainWindow):
 
         self.fileMenu.addAction(self.openStimListButton)
         self.fileMenu.addAction(self.openLogFileButton)
-        self.fileMenu.addAction(self.openStdoutFileButton)
+        #self.fileMenu.addAction(self.openStdoutFileButton)
         self.fileMenu.addAction(self.openStderrFileButton)
 
         self.helpMenu = self.menubar.addMenu(self.tr('&Help'))
-        # self.onShowManualPdfAction = QAction(self.tr('Manual'), self)
-        # self.helpMenu.addAction(self.onShowManualPdfAction)
-        # self.onShowManualPdfAction.triggered.connect(onShowManualPdf)
 
+        self.onShowManualHTMLAction = QAction(self.tr('Manual (html)'), self)
+        self.helpMenu.addAction(self.onShowManualHTMLAction)
+        self.onShowManualHTMLAction.triggered.connect(self.onShowManualHTML)
+
+        self.onShowManualPDFAction = QAction(self.tr('Manual (pdf)'), self)
+        self.helpMenu.addAction(self.onShowManualPDFAction)
+        self.onShowManualPDFAction.triggered.connect(self.onShowManualPDF)
         
         self.onAboutAction = QAction(self.tr('About eegsoundplayer'), self)
         self.helpMenu.addAction(self.onAboutAction)
@@ -273,6 +277,8 @@ class EEGSoundPlayer(QMainWindow):
         self.finishedSession = False
         self.runningBlock = False
         self.playing = False
+        if self.stimListLoaded:
+            self.blockPositions = list(range(self.nBlocks))
         self.currentBlock = 1
         self.currentCount = 0
         self.gauge.setValue(0)
@@ -334,7 +340,7 @@ class EEGSoundPlayer(QMainWindow):
             self.blockGauge.setValue(self.nBlocks)
             self.blockGauge.setFormat("Blocks Completed" +  ': ' + str(self.currentBlock) + '/' + str(self.nBlocks))
             self.logFileHandle.close()
-            self.stdoutFileHandle.close()
+            #self.stdoutFileHandle.close()
             self.stderrFileHandle.close()
             self.logFileIsOpen = False
 
@@ -412,9 +418,9 @@ class EEGSoundPlayer(QMainWindow):
             self.logFileIsOpen = True
             
             rootFilePath = "".join(ftow.split(".")[0:len(ftow.split("."))-1])
-            self.prm["stdoutFilePath"] = rootFilePath + "_stdout" + ".txt"
+            #self.prm["stdoutFilePath"] = rootFilePath + "_stdout" + ".txt"
+            #self.stdoutFileHandle = open(self.prm["stdoutFilePath"], "a")
             self.prm["stderrFilePath"] = rootFilePath + "_stderr" + ".txt"
-            self.stdoutFileHandle = open(self.prm["stdoutFilePath"], "a")
             self.stderrFileHandle = open(self.prm["stderrFilePath"], "a")
                 
                 
@@ -448,7 +454,7 @@ class EEGSoundPlayer(QMainWindow):
             QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(fileToOpen))
         else:
             ret = QMessageBox.information(self, self.tr("message"),
-                                                self.tr("No log file has been opened yet."),
+                                                self.tr("No log file has been selected yet."),
                                                 QMessageBox.Ok)
 
     def onClickOpenStdoutFileButton(self):
@@ -457,7 +463,7 @@ class EEGSoundPlayer(QMainWindow):
             QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(fileToOpen))
         else:
             ret = QMessageBox.information(self, self.tr("message"),
-                                                self.tr("No stdout file has been opened yet."),
+                                                self.tr("No stdout file has been selected yet. \nChoose a Log file in order to select the stderr file."),
                                                 QMessageBox.Ok)
 
     def onClickOpenStderrFileButton(self):
@@ -466,7 +472,7 @@ class EEGSoundPlayer(QMainWindow):
             QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(fileToOpen))
         else:
             ret = QMessageBox.information(self, self.tr("message"),
-                                                self.tr("No stderr file has been opened yet."),
+                                                self.tr("No stderr file has been selected yet. \nChoose a Log file in order to select the stderr file."),
                                                 QMessageBox.Ok)
 
     def onClickSoundCheckButton(self):
@@ -517,6 +523,16 @@ class EEGSoundPlayer(QMainWindow):
         
         return snd
 
+    def onShowManualPDF(self):
+        fileToOpen = os.path.abspath(os.path.dirname(__file__)) + '/eegsoundplayer/doc/_build/latex/eegsoundplayer.pdf'
+        QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(fileToOpen))
+        return
+
+    def onShowManualHTML(self):
+        fileToOpen = os.path.abspath(os.path.dirname(__file__)) + '/eegsoundplayer/doc/_build/html/index.html'
+        QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(fileToOpen))
+        return
+
     def onAbout(self):
         if pyqtversion in [4,5]:
             qt_compiled_ver = QtCore.QT_VERSION_STR
@@ -560,7 +576,8 @@ class threadedPlayer(QThread):
         while self.parent().currentCount < self.parent().totalCount and self.parent().runningBlock == True:
             print("Playing: " + self.parent().trialList[self.parent().blockLabels.index('B'+str(self.parent().currentBlock))][self.parent().currentCount])
             filePath = self.parent().trialList[self.parent().blockLabels.index('B'+str(self.parent().currentBlock))][self.parent().currentCount]
-            subprocess.call(self.parent().playCmdString + filePath, stdout=self.parent().stdoutFileHandle, stderr=self.parent().stderrFileHandle, shell=True)
+            #subprocess.call(self.parent().playCmdString + filePath, stdout=self.parent().stdoutFileHandle, stderr=self.parent().stderrFileHandle, shell=True)
+            subprocess.call(self.parent().playCmdString + filePath, stderr=self.parent().stderrFileHandle, shell=True)
             if self.parent().ISITypeChooser.currentText() == "Fixed":
                 ISI = int(self.parent().ISIBox.text())
             else:

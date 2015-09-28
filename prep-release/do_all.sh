@@ -1,9 +1,9 @@
 #!/bin/sh
 
-# cd ../pychoacoustics/doc
-# ./mkdoc.sh
+ cd ../eegsoundplayer/doc
+ ./mkdoc.sh
 
-# cd ../../prep-release
+cd ../../prep-release
 
 # python3 do_pyside.py
 # python3 do_pyqt4.py

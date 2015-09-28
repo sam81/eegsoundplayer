@@ -1,5 +1,5 @@
 [Desktop Entry]
-Version = 0.0.1
+Version = 0.0.9
 Name=eegsoundplayer
 Name[en_GB]=eegsoundplayer 
 GenericName=eegsoundplayer
@@ -9,5 +9,5 @@ Comment[en_GB]=Audio player for EEG experiments
 Terminal=false
 Type=Application
 Exec=/usr/bin/eegsoundplayer -f %F
-Icon=/usr/share/icons/media-playback-start.svgz
+Icon=/usr/share/icons/media-playback-start.svg
 Categories=Education;Science;

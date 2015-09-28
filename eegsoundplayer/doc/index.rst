@@ -11,7 +11,9 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
-
+   intro
+   user_interface
+   setup
 
 Indices and tables
 ==================
