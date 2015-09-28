@@ -21,7 +21,7 @@ import fnmatch, platform, random, signal, subprocess, sys, time
 import numpy as np
 from tempfile import mkstemp
 
-pyqtversion = 5
+from eegsoundplayer.pyqtver import*
 if pyqtversion == 4:
     from PyQt4 import QtCore, QtGui
     from PyQt4.QtCore import Qt, QEvent, QThread, QDate, QTime, QDateTime
@@ -49,6 +49,8 @@ from eegsoundplayer import qrc_resources
 from eegsoundplayer.sndlib import*
 from eegsoundplayer.wavpy import*
 from eegsoundplayer._version_info import*
+from eegsoundplayer.utilities_open_manual import*
+
 
 __version__ = eegsoundplayer_version
 
@@ -95,11 +97,11 @@ class EEGSoundPlayer(QMainWindow):
 
         self.onShowManualHTMLAction = QAction(self.tr('Manual (html)'), self)
         self.helpMenu.addAction(self.onShowManualHTMLAction)
-        self.onShowManualHTMLAction.triggered.connect(self.onShowManualHTML)
+        self.onShowManualHTMLAction.triggered.connect(onShowManualHTML)
 
         self.onShowManualPDFAction = QAction(self.tr('Manual (pdf)'), self)
         self.helpMenu.addAction(self.onShowManualPDFAction)
-        self.onShowManualPDFAction.triggered.connect(self.onShowManualPDF)
+        self.onShowManualPDFAction.triggered.connect(onShowManualPDF)
         
         self.onAboutAction = QAction(self.tr('About eegsoundplayer'), self)
         self.helpMenu.addAction(self.onAboutAction)
@@ -522,16 +524,6 @@ class EEGSoundPlayer(QMainWindow):
         snd = concatenate((snd, p5), axis=0)
         
         return snd
-
-    def onShowManualPDF(self):
-        fileToOpen = os.path.abspath(os.path.dirname(__file__)) + '/eegsoundplayer/doc/_build/latex/eegsoundplayer.pdf'
-        QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(fileToOpen))
-        return
-
-    def onShowManualHTML(self):
-        fileToOpen = os.path.abspath(os.path.dirname(__file__)) + '/eegsoundplayer/doc/_build/html/index.html'
-        QDesktopServices.openUrl(QtCore.QUrl.fromLocalFile(fileToOpen))
-        return
 
     def onAbout(self):
         if pyqtversion in [4,5]:
