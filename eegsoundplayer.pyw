@@ -417,10 +417,12 @@ class EEGSoundPlayer(QMainWindow):
                 if ln[0:3] == "ISI":
                     if len(ln.split(":")[1].split("-")) == 1:
                         self.ISITypeChooser.setCurrentIndex(0)
+                        self.onISITypeChooseChange("Fixed")
                         ISI = ln.split(":")[1].strip()
                         self.ISIBox.setText(ISI)
                     else:
                         self.ISITypeChooser.setCurrentIndex(1)
+                        self.onISITypeChooseChange("Random Uniform")
                         ISIMin = ln.split(":")[1].split("-")[0].strip()
                         ISIMax = ln.split(":")[1].split("-")[1].strip()
                         self.ISIMinBox.setText(ISIMin)
