@@ -74,7 +74,7 @@ class EEGSoundPlayer(QMainWindow):
         # exitButton.triggered.connect(self.close)
         # self.fileMenu.addAction(exitButton)
 
-        self.openStimListButton = QAction(QIcon.fromTheme("document-open", QIcon(":/document-open")), self.tr('Open Stim. List'), self)
+        self.openStimListButton = QAction(QIcon.fromTheme("document-open", QIcon(":/document-open")), self.tr("Open Stim. List"), self)
         self.openStimListButton.setStatusTip(self.tr('Open Stim. List'))
         self.openStimListButton.triggered.connect(self.onClickOpenStimListButton)
 
