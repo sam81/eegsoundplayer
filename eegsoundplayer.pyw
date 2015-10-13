@@ -298,7 +298,13 @@ class EEGSoundPlayer(QMainWindow):
             
     def onClickSoundPlayButton(self):
         if self.stimListLoaded == False:# or self.finishedSession == True:
-            return
+            ret = QMessageBox.warning(self, self.tr("Warning"),
+                                      "No stimulus list is loaded. Would you like to load one?",
+                                      QMessageBox.Yes | QMessageBox.No)
+            if ret == QMessageBox.Yes:
+                self.onClickLoadStimListButton()
+            else:
+                return
         if self.finishedSession == True:
             ret = QMessageBox.warning(self, self.tr("Warning"),
                                       "Session finished. Please, click the reset button to start a new session.",
