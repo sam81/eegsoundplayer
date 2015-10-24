@@ -227,10 +227,13 @@ class EEGSoundPlayer(QMainWindow):
         self.gauge.setRange(0, 100)
         self.blockGauge = QProgressBar(self)
 
+        #self.ETABlockTF = QLabel("")
+
         self.vBox = QVBoxLayout()
         self.vBox.addLayout(self.gridBox)
         self.vBox.addWidget(self.gauge)
         self.vBox.addWidget(self.blockGauge)
+        #self.vBox.addWidget(self.ETABlockTF)
 
         self.cw.setLayout(self.vBox)
         self.cw.layout().setSizeConstraint(QLayout.SetFixedSize)
@@ -260,11 +263,54 @@ class EEGSoundPlayer(QMainWindow):
         self.stimListLoaded = False
         self.finishedSession = False
         self.logFileIsOpen = False
+        self.sessionStartTime = None
         self.show()
         
     def updateGauge(self, val):
         self.gauge.setValue(val)
+        self.blockElapsedTime = time.time() - self.blockStartTime
+        self.blockETA = (100*self.blockElapsedTime)/val - self.blockElapsedTime
+        bl_minutes = int(self.blockETA // 60)
+        bl_seconds = int(self.blockETA - (bl_minutes * 60))
+        if bl_minutes > 0:
+            blockETAStr =  ('%s min %s sec' % (bl_minutes, bl_seconds))
+        else:
+            blockETAStr =  ('%s sec' % (bl_seconds))
 
+        self.gauge.setFormat(str(val)+"%"+ " - ETA: "+ blockETAStr)
+
+        # pcBlocksCompleted = (self.currentBlock-1)/self.nBlocks*100 + (val/100)*(1/self.nBlocks*100)
+        # self.sessionElapsedTime = time.time() - self.sessionStartTime
+        # self.sessionETA = ((100*self.sessionElapsedTime)/pcBlocksCompleted - self.sessionElapsedTime )
+
+        # sess_minutes = int(self.sessionETA // 60)
+        # sess_seconds = int(self.sessionETA - (sess_minutes * 60))
+        # if sess_minutes > 0:
+        #     sessionETAStr =  ('%s min %s sec' % (sess_minutes, sess_seconds))
+        # else:
+        #     sessionETAStr =  ('%s sec' % (sess_seconds))
+        # self.blockGauge.setFormat(("Blocks Completed" +  ': ' + str(self.currentBlock-1) + '/' + str(self.nBlocks) + " - ETA: " + sessionETAStr))
+        self.updateBlockGauge()
+
+    def updateBlockGauge(self):
+        val = self.gauge.value()
+        try:
+            pcBlocksCompleted = (self.currentBlock-1)/self.nBlocks*100 + (val/100)*(1/self.nBlocks*100)
+        except:
+           pcBlocksCompleted = 0
+
+        if pcBlocksCompleted > 0 and self.sessionStartTime != None:
+            self.sessionElapsedTime = time.time() - self.sessionStartTime
+            self.sessionETA = ((100*self.sessionElapsedTime)/pcBlocksCompleted - self.sessionElapsedTime )
+
+            sess_minutes = int(self.sessionETA // 60)
+            sess_seconds = int(self.sessionETA - (sess_minutes * 60))
+            if sess_minutes > 0:
+                sessionETAStr =  ('%s min %s sec' % (sess_minutes, sess_seconds))
+            else:
+                sessionETAStr =  ('%s sec' % (sess_seconds))
+            self.blockGauge.setFormat(("Blocks Completed" +  ': ' + str(self.currentBlock-1) + '/' + str(self.nBlocks) + " - ETA: " + sessionETAStr))
+        
     def updateStatus(self):
         self.blockGauge.setRange(0, self.nBlocks)
         self.blockGauge.setValue(self.currentBlock-1)
@@ -274,6 +320,7 @@ class EEGSoundPlayer(QMainWindow):
         self.storedBlocksLabel.setText("Stored Blocks: " + str(self.nBlocks))
         if self.stimListLoaded == True:
             self.totalCount = len(self.trialList[self.blockLabels.index('B'+str(self.currentBlock))])
+        self.updateBlockGauge()
 
     def onClickResetButton(self):
         if self.stimListLoaded == False:
@@ -286,15 +333,31 @@ class EEGSoundPlayer(QMainWindow):
         self.resetSession()
         
     def resetSession(self):
+        self.playThread.terminate()
         self.finishedSession = False
         self.runningBlock = False
         self.playing = False
+
+        try:
+            self.logFileHandle.close()
+        except:
+            pass
+        self.logFileIsOpen = False
+    
         if self.stimListLoaded:
             self.blockPositions = list(range(self.nBlocks))
+
+        self.statusBar().showMessage("Paused")
+        self.soundPlayButton.setText("Play")
+        self.soundPlayButton.setIcon(QtGui.QIcon.fromTheme("media-playback-start", QIcon(":/media-playback-start")))
+        
         self.currentBlock = 1
         self.currentCount = 0
         self.gauge.setValue(0)
+        self.gauge.setFormat(str(0)+"%"+ " - ETA: --")
         self.updateStatus()
+
+     
             
     def onClickSoundPlayButton(self):
         if self.stimListLoaded == False:# or self.finishedSession == True:
@@ -312,15 +375,23 @@ class EEGSoundPlayer(QMainWindow):
             return
         if self.logFileIsOpen == False:
             self.onClickSaveLogButton()
+
+        
+        
         if self.currentBlock == 1:
             if self.shuffleBlocksCheckBox.isChecked() == True:
                 random.shuffle(self.blockLabels)
             if self.shuffleTrialsCheckBox.isChecked() == True:
                 for bl in range(self.nBlocks):
                     random.shuffle(self.trialList[bl])
+            self.sessionStartTime = time.time()
             self.totalCount = len(self.trialList[self.blockLabels.index('B'+str(self.currentBlock))])
             self.updateStatus()
-
+            
+        self.blockStartTime = time.time()
+        if self.sessionStartTime == None:
+            self.sessionStartTime = time.time()
+            
         self.runningBlock = True
         if self.playing == False:
             if self.prm["pref"]["startRecWAV"] != "":
