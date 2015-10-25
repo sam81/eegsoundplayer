@@ -63,6 +63,10 @@ class EEGSoundPlayer(QMainWindow):
         self.prm['currentLocale'] = QtCore.QLocale("en_GB")
         self.cw = QFrame()
         self.gridBox = QGridLayout()
+        self.gridBox.setColumnStretch(0, 1)
+        self.gridBox.setColumnStretch(1, 1)
+        self.gridBox.setColumnStretch(2, 1)
+        self.gridBox.setColumnStretch(3, 1)
 
         self.menubar = self.menuBar()
         #FILE MENU
@@ -195,12 +199,14 @@ class EEGSoundPlayer(QMainWindow):
 
         n = n+1
         self.prevBlockButton = QPushButton("Previous", self)
+        #self.prevBlockButton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed);
         self.prevBlockButton.clicked.connect(self.onClickPrevBlockButton)
         self.prevBlockButton.setIcon(QIcon.fromTheme("go-previous", QIcon(":/go-previous")))
         self.prevBlockButton.setToolTip("Move to previous block")
         self.gridBox.addWidget(self.prevBlockButton, n, 0)
 
         self.nextBlockButton = QPushButton("Next", self)
+        #self.nextBlockButton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed);
         self.nextBlockButton.clicked.connect(self.onClickNextBlockButton)
         self.nextBlockButton.setIcon(QIcon.fromTheme("go-next", QIcon(":/go-next")))
         self.nextBlockButton.setToolTip("Move to next block")
@@ -227,16 +233,16 @@ class EEGSoundPlayer(QMainWindow):
         self.gauge.setRange(0, 100)
         self.blockGauge = QProgressBar(self)
 
-        #self.ETABlockTF = QLabel("")
 
         self.vBox = QVBoxLayout()
         self.vBox.addLayout(self.gridBox)
+        self.vBox.addStretch(1)
         self.vBox.addWidget(self.gauge)
         self.vBox.addWidget(self.blockGauge)
-        #self.vBox.addWidget(self.ETABlockTF)
+
 
         self.cw.setLayout(self.vBox)
-        self.cw.layout().setSizeConstraint(QLayout.SetFixedSize)
+        #self.cw.layout().setSizeConstraint(QLayout.SetFixedSize)
         self.setCentralWidget(self.cw)
         self.setWindowTitle('EEG Sound Player')
         self.statusBar().showMessage("No Stimulus List Loaded")
