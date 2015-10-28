@@ -67,6 +67,7 @@ class EEGSoundPlayer(QMainWindow):
         self.gridBox.setColumnStretch(1, 1)
         self.gridBox.setColumnStretch(2, 1)
         self.gridBox.setColumnStretch(3, 1)
+        self.setGeometry(25, 50, 350, 350)
 
         self.menubar = self.menuBar()
         #FILE MENU
@@ -275,27 +276,22 @@ class EEGSoundPlayer(QMainWindow):
     def updateGauge(self, val):
         self.gauge.setValue(val)
         self.blockElapsedTime = time.time() - self.blockStartTime
-        self.blockETA = (100*self.blockElapsedTime)/val - self.blockElapsedTime
-        bl_minutes = int(self.blockETA // 60)
-        bl_seconds = int(self.blockETA - (bl_minutes * 60))
-        if bl_minutes > 0:
-            blockETAStr =  ('%s min %s sec' % (bl_minutes, bl_seconds))
-        else:
-            blockETAStr =  ('%s sec' % (bl_seconds))
+        try:
+            self.blockETA = (100*self.blockElapsedTime)/val - self.blockElapsedTime
+        except:
+            self.blockETA = np.nan
 
+        if np.isnan(self.blockETA) == False:
+            bl_minutes = int(self.blockETA // 60)
+            bl_seconds = int(self.blockETA - (bl_minutes * 60))
+            if bl_minutes > 0:
+                blockETAStr =  ('%s min %s sec' % (bl_minutes, bl_seconds))
+            else:
+                blockETAStr =  ('%s sec' % (bl_seconds))
+        else:
+            blockETAStr = "--"
         self.gauge.setFormat(str(val)+"%"+ " - ETA: "+ blockETAStr)
 
-        # pcBlocksCompleted = (self.currentBlock-1)/self.nBlocks*100 + (val/100)*(1/self.nBlocks*100)
-        # self.sessionElapsedTime = time.time() - self.sessionStartTime
-        # self.sessionETA = ((100*self.sessionElapsedTime)/pcBlocksCompleted - self.sessionElapsedTime )
-
-        # sess_minutes = int(self.sessionETA // 60)
-        # sess_seconds = int(self.sessionETA - (sess_minutes * 60))
-        # if sess_minutes > 0:
-        #     sessionETAStr =  ('%s min %s sec' % (sess_minutes, sess_seconds))
-        # else:
-        #     sessionETAStr =  ('%s sec' % (sess_seconds))
-        # self.blockGauge.setFormat(("Blocks Completed" +  ': ' + str(self.currentBlock-1) + '/' + str(self.nBlocks) + " - ETA: " + sessionETAStr))
         self.updateBlockGauge()
 
     def updateBlockGauge(self):
@@ -315,7 +311,9 @@ class EEGSoundPlayer(QMainWindow):
                 sessionETAStr =  ('%s min %s sec' % (sess_minutes, sess_seconds))
             else:
                 sessionETAStr =  ('%s sec' % (sess_seconds))
-            self.blockGauge.setFormat(("Blocks Completed" +  ': ' + str(self.currentBlock-1) + '/' + str(self.nBlocks) + " - ETA: " + sessionETAStr))
+        else:
+            sessionETAStr = "--"
+        self.blockGauge.setFormat(("Blocks Completed" +  ': ' + str(self.currentBlock-1) + '/' + str(self.nBlocks) + " - ETA: " + sessionETAStr))
         
     def updateStatus(self):
         self.blockGauge.setRange(0, self.nBlocks)
@@ -339,7 +337,8 @@ class EEGSoundPlayer(QMainWindow):
         self.resetSession()
         
     def resetSession(self):
-        self.playThread.terminate()
+        #self.playThread.terminate()
+        self.playThreadStopped = True
         self.finishedSession = False
         self.runningBlock = False
         self.playing = False
@@ -407,13 +406,16 @@ class EEGSoundPlayer(QMainWindow):
             self.statusBar().showMessage("Playing")
             self.soundPlayButton.setIcon(QtGui.QIcon.fromTheme("media-playback-pause", QIcon(":/media-playback-pause")))
             self.soundPlayButton.setText("Pause")
+            self.playThreadStopped = False
             self.playThread.playThreadedSound()
         else:
             self.playing = False
             self.statusBar().showMessage("Paused")
             self.soundPlayButton.setIcon(QtGui.QIcon.fromTheme("media-playback-start", QIcon(":/media-playback-start")))
             self.soundPlayButton.setText("Play")
-            self.playThread.terminate()
+            #self.playThread.terminate()
+            self.playThreadStopped = True
+            #self.playThread.quit()
             if 'sleepBeforeStop' in self.prm:
                 time.sleep(self.prm['sleepBeforeStop']/1000)
             else:
@@ -422,8 +424,8 @@ class EEGSoundPlayer(QMainWindow):
                 subprocess.call(self.playCmdString + self.prm["pref"]["stopRecWAV"], shell=True)
                 #time.sleep(0.5)
 
-    def onClickSoundPauseButton(self):
-        self.playThread.terminate()
+    # def onClickSoundPauseButton(self):
+    #     self.playThread.terminate()
 
     def moveToNextBlock(self):
         self.runningBlock = False
@@ -593,9 +595,11 @@ class EEGSoundPlayer(QMainWindow):
             (hnl, self.soundCheckWAVFilePath) = mkstemp("tmp_snd.wav")
             wavwrite(snd, self.prm['sampRate'], 32, self.soundCheckWAVFilePath)
             self.playThread2 = threadedPlayer2(self)
+            self.playThread2Stopped = False
             self.playThread2.playThreadedSound(self.soundCheckWAVFilePath)
         else:
-            self.playThread2.terminate()
+            #self.playThread2.terminate()
+            self.playThread2Stopped = True
             self.soundCheckButton.setIcon(QtGui.QIcon.fromTheme("media-playback-start", QIcon(":/media-playback-start")))
             self.soundCheckButton.setText("Sound Check")
             self.prm["soundCheckRunning"] = False
@@ -677,7 +681,7 @@ class threadedPlayer(QThread):
     def playThreadedSound(self):
         self.start()
     def run(self):
-        while self.parent().currentCount < self.parent().totalCount and self.parent().runningBlock == True:
+        while self.parent().currentCount < self.parent().totalCount and self.parent().runningBlock == True and self.parent().playThreadStopped == False:
             if self.parent().currentCount == 0:
                 # if self.prm["pref"]["startRecWAV"] != "":
                 #     subprocess.call(self.parent().playCmdString + self.prm["pref"]["startRecWAV"], shell=True)
@@ -689,14 +693,17 @@ class threadedPlayer(QThread):
             filePath = self.parent().trialList[self.parent().blockLabels.index('B'+str(self.parent().currentBlock))][self.parent().currentCount]
             #subprocess.call(self.parent().playCmdString + filePath, stdout=self.parent().stdoutFileHandle, stderr=self.parent().stderrFileHandle, shell=True)
             subprocess.call(self.parent().playCmdString + filePath, stderr=self.parent().stderrFileHandle, shell=True)
+
+            currDate = QDate.toString(QDate.currentDate(), self.parent().prm["currentLocale"].dateFormat(self.parent().prm["currentLocale"].ShortFormat)) 
+            currTime = QTime.toString(QTime.currentTime())#, self.parent().prm["currentLocale"].timeFormat(self.parent().prm["currentLocale"].ShortFormat)) 
+            self.parent().logFileHandle.write(filePath + ";" + self.parent().blockLabels[self.parent().currentBlock-1] + ";" + self.parent().subjID.text() + ";" + currDate + ";" + currTime + "\n")
+            
             if self.parent().ISITypeChooser.currentText() == "Fixed":
                 ISI = int(self.parent().ISIBox.text())
             else:
                 ISI = random.uniform(int(self.parent().ISIMinBox.text()), int(self.parent().ISIMaxBox.text()))
             time.sleep(ISI/1000)
-            currDate = QDate.toString(QDate.currentDate(), self.parent().prm["currentLocale"].dateFormat(self.parent().prm["currentLocale"].ShortFormat)) 
-            currTime = QTime.toString(QTime.currentTime())#, self.parent().prm["currentLocale"].timeFormat(self.parent().prm["currentLocale"].ShortFormat)) 
-            self.parent().logFileHandle.write(filePath + ";" + self.parent().blockLabels[self.parent().currentBlock-1] + ";" + self.parent().subjID.text() + ";" + currDate + ";" + currTime + "\n")
+
             
             self.parent().currentCount = self.parent().currentCount + 1
 
@@ -715,7 +722,7 @@ class threadedPlayer2(QThread):
         self.filePath = filePath
         self.start()
     def run(self):
-        while True:
+        while self.parent().playThread2Stopped == False:
             subprocess.call(self.parent().playCmdString + self.filePath, shell=True)
             time.sleep(0.5)
 
