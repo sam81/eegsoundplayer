@@ -712,6 +712,7 @@ class threadedPlayer(QThread):
             if self.parent().currentCount == self.parent().totalCount:
                 self.blockCompleted.emit()
                 if self.parent().prm["pref"]["stopRecWAV"] != "":
+                    time.sleep(1)
                     subprocess.call(self.parent().playCmdString + self.parent().prm["pref"]["stopRecWAV"], shell=True)
 
 
