@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-#   Copyright (C) 2015 Samuele Carcagno <sam.carcagno@gmail.com>
+#   Copyright (C) 2015-2019 Samuele Carcagno <sam.carcagno@gmail.com>
 #   This file is part of eegsoundplayer
 
 #    eegsoundplayer is free software: you can redistribute it and/or modify
@@ -52,6 +52,7 @@ from eegsoundplayer.sndlib import*
 from eegsoundplayer.wavpy import*
 from eegsoundplayer._version_info import*
 from eegsoundplayer.utilities_open_manual import*
+from eegsoundplayer.get_test_sound_path import*
 
 
 __version__ = eegsoundplayer_version
@@ -597,7 +598,7 @@ class EEGSoundPlayer(QMainWindow):
             self.playThread2 = threadedPlayer2(self)
             self.playThread2Stopped = False
             #self.playThread2.playThreadedSound(self.soundCheckWAVFilePath)
-            self.playThread2.playThreadedSound(os.path.abspath(os.path.dirname(__file__)) + '/eegsoundplayer/sounds/left_right_tone_test_48000Hz.wav')
+            self.playThread2.playThreadedSound(get_test_sound_path())
         else:
             #self.playThread2.terminate()
             self.playThread2Stopped = True
