@@ -3,7 +3,7 @@ from distutils.core import setup
 import glob
 setup(
     name="eegsoundplayer",
-    version="0.0.21",
+    version="0.0.22",
     url="",
     author="Samuele Carcagno",
     author_email="sam.carcagno@google.com;",
@@ -43,7 +43,8 @@ setup(
                                      "doc/_build/html/_static/font/*.*",
                                      "doc/_build/html/_static/js/*.*",
                                      "doc/_build/html/_templates/autosummary/*.*",
-                                     "doc/_build/html/_themes/*.*"],},
+                                     "doc/_build/html/_themes/*.*",
+                                     "sounds/*.*"],},
 
     
     data_files = [('share/applications', ['eegsoundplayer.desktop']),

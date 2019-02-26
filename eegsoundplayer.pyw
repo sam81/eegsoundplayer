@@ -591,12 +591,13 @@ class EEGSoundPlayer(QMainWindow):
             self.prm["soundCheckRunning"] = True
             self.soundCheckButton.setIcon(QtGui.QIcon.fromTheme("media-playback-pause", QIcon(":/media-playback-stop")))
             self.soundCheckButton.setText("Stop Sound Check")
-            snd = self.makeSoundCheckWAV()
-            (hnl, self.soundCheckWAVFilePath) = mkstemp("tmp_snd.wav")
-            wavwrite(snd, self.prm['sampRate'], 32, self.soundCheckWAVFilePath)
+            #snd = self.makeSoundCheckWAV()
+            #(hnl, self.soundCheckWAVFilePath) = mkstemp("tmp_snd.wav")
+            #wavwrite(snd, self.prm['sampRate'], 32, self.soundCheckWAVFilePath)
             self.playThread2 = threadedPlayer2(self)
             self.playThread2Stopped = False
-            self.playThread2.playThreadedSound(self.soundCheckWAVFilePath)
+            #self.playThread2.playThreadedSound(self.soundCheckWAVFilePath)
+            self.playThread2.playThreadedSound(os.path.abspath(os.path.dirname(__file__)) + '/eegsoundplayer/sounds/left_right_tone_test_48000Hz.wav')
         else:
             #self.playThread2.terminate()
             self.playThread2Stopped = True
